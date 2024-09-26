@@ -1,0 +1,29 @@
+# Ignore the results directory
+results/
+
+# Ignore Python cache and environment files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Ignore virtual environment directories
+venv/
+env/
+
+# Ignore environment variable files
+.env
+
+# Ignore MySQL database configuration file
+database.yml
+
+# Ignore any logs or temporary files
+*.log
+*.tmp
+
+# Ignore compiled bytecode
+*.pyc
+
+# Ignore system files
+.DS_Store
+Thumbs.db
