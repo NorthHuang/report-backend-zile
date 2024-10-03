@@ -17,21 +17,34 @@ def load_database_config():
     return config
 
 def create_table():
-    print("start creating questions table..........")
+    print("Start creating user and analysis_results tables without foreign key..........")
     config = load_database_config()
     connection = mysql.connector.connect(**config['development'])  # Change to appropriate environment
     cursor = connection.cursor()
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS analysis_results (
+        CREATE TABLE IF NOT EXISTS users (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            result_file_url VARCHAR(255) NOT NULL,
+            username VARCHAR(255) NOT NULL UNIQUE,
+            password VARCHAR(255) NOT NULL,
+            role ENUM('admin', 'user') NOT NULL DEFAULT 'user',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         )
     """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS analysis_results (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            result_file_url VARCHAR(255) NOT NULL,
+            username VARCHAR(255) NOT NULL, -- 关联用户的 username，但不设置外键
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        )
+    """)
+
     cursor.close()
     connection.close()
-    print("creating questions table successfully..........")
+    print("Created user and analysis_results tables successfully.")
+
 
 if __name__ == "__main__":
     create_results_directory()
