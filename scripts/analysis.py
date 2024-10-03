@@ -1,11 +1,34 @@
-from flask import Blueprint, request, jsonify
-import os
 import json
 from datetime import datetime
-from database import insert_result_into_db
+import os
+from database import insert_result_into_db,load_database_config
 from auth import token_required
-
+from flask import Blueprint, request, jsonify
+import mysql.connector
 analysis_bp = Blueprint('analysis', __name__)
+
+@analysis_bp.route('/user-reports', methods=['GET'])
+@token_required
+def get_user_reports(current_user):
+    try:
+        db_config = load_database_config()
+        conn = mysql.connector.connect(**db_config['development'])
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute('SELECT * FROM analysis_results WHERE username = %s', (current_user['username'],))
+        reports = cursor.fetchall()
+
+        detailed_reports= []
+        for report in reports:
+            file_path = report["result_file_url"]
+            if(os.path.exists(file_path)):
+                with open(file_path,"r") as f:
+                    report_data=json.load(f)
+                detailed_reports.append(report_data)
+        cursor.close()
+        conn.close()
+        return jsonify({"status": "success", "reports": detailed_reports})
+    except mysql.connector.Error as err:
+        return jsonify({"status": "error", "error": str(err)}), 500
 
 @analysis_bp.route('/analysis', methods=['POST'])
 @token_required
