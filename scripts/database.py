@@ -1,7 +1,6 @@
 import mysql.connector
 import yaml
 import os
-
 def load_database_config():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.join(script_dir, '../database.yml')
