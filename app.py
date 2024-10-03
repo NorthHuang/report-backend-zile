@@ -9,7 +9,7 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 # Allow cross-domain requests
-CORS(app, resources={r"/*": {"origins": "http://localhost:8080"}})
+CORS(app, resources={r"/*": {"origins": ["http://localhost:8080", "http://127.0.0.1:8080"]}})
 
 app.config['SECRET_KEY']=SECRET_KEY
 
