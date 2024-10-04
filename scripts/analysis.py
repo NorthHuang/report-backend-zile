@@ -18,7 +18,10 @@ def get_user_reports(current_user):
         db_config = load_database_config()
         conn = mysql.connector.connect(**db_config['development'])
         cursor = conn.cursor(dictionary=True)
-        cursor.execute('SELECT * FROM analysis_results WHERE username = %s', (current_user['username'],))
+        if current_user['role'] == 'admin':
+            cursor.execute('SELECT * FROM analysis_results')  
+        else:
+            cursor.execute('SELECT * FROM analysis_results WHERE username = %s', (current_user['username'],)) 
         reports = cursor.fetchall()
 
         detailed_reports= []
