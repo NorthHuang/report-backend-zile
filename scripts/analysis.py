@@ -1,6 +1,8 @@
 import json
 from datetime import datetime
 import os
+import openai
+from openai import OpenAI
 from database import insert_result_into_db,load_database_config
 from auth import token_required
 from flask import Blueprint, request, jsonify
@@ -10,7 +12,7 @@ import joblib
 import numpy as np
 
 analysis_bp = Blueprint('analysis', __name__)
-
+client = OpenAI(api_key=openai.api_key)
 @analysis_bp.route('/user-reports', methods=['GET'])
 @token_required
 def get_user_reports(current_user):
@@ -31,6 +33,9 @@ def get_user_reports(current_user):
                 with open(file_path,"r") as f:
                     report_data=json.load(f)
                 detailed_reports.append(report_data)
+                recommendation = report.get("recommendation", "No recommendation available")
+                for item in report_data:
+                    item["recommendation"] = recommendation 
         cursor.close()
         conn.close()
         return jsonify({"status": "success", "reports": detailed_reports})
@@ -76,9 +81,32 @@ def analysis(current_user):
         with open(filename, 'w') as f:
             json.dump(json_data, f)
 
-        insert_result_into_db(filename,current_user['username'])
-
+        recommendation=generate_recommendation(json_data)
+        print("recommendation:",recommendation)
+        insert_result_into_db(filename,current_user['username'],recommendation)
         return jsonify({"status": "ok", "prediction": json_data})
 
     except Exception as e:
         return jsonify({"status": "error", "error": str(e)}), 500
+
+def generate_recommendation(data):
+    try:
+        input_text = f"Here is some analysis data: {json.dumps(data)}.\n Based on this data, provide a recommendation in less than 50 words."
+        completion = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+                {
+                    "role": "user",
+                    "content":input_text
+                }
+            ],
+            max_tokens=50,
+            temperature=0.7
+        )
+        recommendation = completion.choices[0].message.content
+        return recommendation
+
+    except Exception as e:
+        print(f"Error generating recommendation: {e}")
+        return "No recommendation available."

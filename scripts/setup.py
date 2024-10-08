@@ -32,14 +32,16 @@ def create_table():
         )
     """)
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS analysis_results (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            result_file_url VARCHAR(255) NOT NULL,
-            username VARCHAR(255) NOT NULL, -- 关联用户的 username，但不设置外键
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        )
-    """)
+    CREATE TABLE IF NOT EXISTS analysis_results (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        result_file_url VARCHAR(255) NOT NULL,
+        username VARCHAR(255) NOT NULL,  -- 关联用户的 username，但不设置外键
+        recommendation TEXT,            
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+""")
+
 
     cursor.close()
     connection.close()

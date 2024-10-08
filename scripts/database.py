@@ -8,16 +8,16 @@ def load_database_config():
         config = yaml.safe_load(f)
     return config
 
-def insert_result_into_db(file_url,username):
+def insert_result_into_db(file_url,username,recommendation):
     db_config = load_database_config()
     try:
         conn = mysql.connector.connect(**db_config['development'])
         cursor = conn.cursor()
 
         cursor.execute('''
-            INSERT INTO analysis_results (result_file_url, username)
-            VALUES (%s, %s)
-        ''', (file_url,username))
+            INSERT INTO analysis_results (result_file_url, username,recommendation)
+            VALUES (%s, %s, %s)
+        ''', (file_url,username,recommendation))
 
         conn.commit()
         cursor.close()
