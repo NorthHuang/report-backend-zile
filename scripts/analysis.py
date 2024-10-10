@@ -57,13 +57,15 @@ def analysis(current_user):
         json_data = json.loads(file_content)
 
         model_path = os.path.dirname(__file__)
-        voting_reg = joblib.load(os.path.join(model_path, '../model/voting_regressor_model.pkl'))
+        voting_reg = joblib.load(os.path.join(model_path, '../model/voting_regressor_model.pkl'))  # model for prediction risk_score 
+        voting_clf = joblib.load(os.path.join(model_path, '../model/voting_classifier_model.pkl'))  # model for classfication attack type(name)
         scaler = joblib.load(os.path.join(model_path, '../model/scaler.pkl'))
         encoder = joblib.load(os.path.join(model_path, '../model/encoder.pkl'))
-        
+        name_encoder = joblib.load(os.path.join(model_path, '../model/name_encoder.pkl'))  # Encoder for  classfication attack type(name)
+
         categorical_columns = ['protocol', 'traffic_direction', 'is_encrypted', 'destination_device']
-        numeric_columns = ['packet_rate', 'data_rate', 'cpu_usage', 'memory_usage', 'disk_usage',
-                'network_traffic_in', 'network_traffic_out']
+        numeric_columns = ['packet_rate', 'data_rate', 'cpu_usage', 'memory_usage', 'disk_usage', 
+                        'network_traffic_in', 'network_traffic_out']
 
         for data in json_data:
             data_without_timestamp = {key: value for key, value in data.items() if key != 'timestamp'}
@@ -75,7 +77,11 @@ def analysis(current_user):
             new_packet_combined = np.concatenate([new_packet_numeric_scaled, new_packet_categorical_encoded], axis=1)
             
             predicted_risk_score = voting_reg.predict(new_packet_combined)
+            predicted_attack_type_encoded = voting_clf.predict(new_packet_combined)
+            predicted_attack_type = name_encoder.inverse_transform(predicted_attack_type_encoded)
+
             data['risk_score'] = round(predicted_risk_score[0], 2)
+            data['attack_type'] = predicted_attack_type[0]
 
         filename = f'results/{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
         with open(filename, 'w') as f:
@@ -110,3 +116,22 @@ def generate_recommendation(data):
     except Exception as e:
         print(f"Error generating recommendation: {e}")
         return "No recommendation available."
+  
+@analysis_bp.route('/analyze_url', methods=['POST'])
+def analyze_url():
+    data = request.json
+    url = data['url']
+    model_path = os.path.dirname(__file__)
+    try:
+        xgb_model = joblib.load(os.path.join(model_path, '../model/url_xgb_model.pkl'))
+        tfidf_vectorizer = joblib.load(os.path.join(model_path, '../model/tfidf_vectorizer.pkl'))
+        label_encoder = joblib.load(os.path.join(model_path, '../model/url_encoder.pkl'))
+
+        # Convert input url to vector
+        input_vector = tfidf_vectorizer.transform([url])
+        # Change labeling after prediction
+        prediction = xgb_model.predict(input_vector)
+        result = label_encoder.inverse_transform(prediction)[0]
+        return jsonify({"status": "ok", "result": result})
+    except Exception as e:
+        return jsonify({"status": "error", "error": str(e)}), 500
