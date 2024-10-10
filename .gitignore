@@ -1,6 +1,8 @@
 # Ignore the results directory
 results/
 
+*.pkl
+
 # Ignore Python cache and environment files
 __pycache__/
 *.py[cod]
